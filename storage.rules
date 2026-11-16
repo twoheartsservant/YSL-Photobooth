@@ -1,0 +1,7 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Guest files are private. The Render backend serves them after token verification.
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

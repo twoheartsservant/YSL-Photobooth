@@ -1,0 +1,72 @@
+{
+  "brand": {
+    "name": "Young Servants of the Lord",
+    "primary": "#BDE0FE",
+    "secondary": "#FFF2B2",
+    "background": "#FFFFFF",
+    "text": "#263746"
+  },
+  "photo_count": 3,
+  "countdown_seconds": 3,
+  "host": "0.0.0.0",
+  "port": 5000,
+  "guest_display_index": 1,
+  "photo_frames": [
+    {
+      "x": 150,
+      "y": 710,
+      "width": 510,
+      "height": 300,
+      "radius": 30,
+      "crop_mode": "cover"
+    },
+    {
+      "x": 150,
+      "y": 1035,
+      "width": 510,
+      "height": 310,
+      "radius": 30,
+      "crop_mode": "cover"
+    },
+    {
+      "x": 150,
+      "y": 1370,
+      "width": 510,
+      "height": 310,
+      "radius": 30,
+      "crop_mode": "cover"
+    }
+  ],
+  "photo_frames_right": [
+    {
+      "x": 780,
+      "y": 700,
+      "width": 520,
+      "height": 305,
+      "radius": 30,
+      "crop_mode": "cover"
+    },
+    {
+      "x": 780,
+      "y": 1025,
+      "width": 520,
+      "height": 315,
+      "radius": 30,
+      "crop_mode": "cover"
+    },
+    {
+      "x": 780,
+      "y": 1360,
+      "width": 520,
+      "height": 315,
+      "radius": 30,
+      "crop_mode": "cover"
+    }
+  ],
+  "print": {
+    "printer_name": "",
+    "copies": 1
+  },
+  "photo_share_base_url": "",
+  "lan_host": ""
+}

@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: ysl-photobooth-cloud
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn cloud_service:app --workers 1 --threads 8 --timeout 180
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: CLOUD_SYNC_SECRET
+        generateValue: true
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_BASE64
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: GUEST_RATE_LIMIT_PER_MINUTE
+        value: "90"
