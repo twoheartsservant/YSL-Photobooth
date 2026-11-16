@@ -1,0 +1,47 @@
+YSL VALENCIA PHOTOBOOTH — CAMERA LIVE PREVIEW RELAY HARDENING
+
+Architecture retained
+- operator.js remains the only owner of the webcam stream.
+- Main photo capture continues to use the original full-resolution captureVideo.
+- Secondary and guest.html receive preview-only JPEG frames through the existing
+  same-origin Flask HTTP relay: POST /api/live-frame and GET /api/live-frame.jpg.
+- No second webcam stream, WebRTC, WebSocket, or new camera architecture added.
+
+Changes in this revision
+- Reduced preview-only relay width to 1280px and JPEG quality to 0.72 to reduce
+  frame payload size and LAN transfer pressure. The relay retries oversized
+  preview frames at a smaller size and keeps payloads below the backend limit.
+- Added a bounded relay request timeout and explicit console/status diagnostics.
+- Prevented overlapping relay requests when the relay timer is restarted.
+- Kept the relay tied to the existing live operator stream and waits for video
+  readiness before extracting frames.
+- Guest frame polling now uses bounded requests, retries automatically, reports
+  connecting/reconnecting/unavailable states, and continues after decode errors.
+- Added a bounded image-decode timeout so one stalled frame cannot permanently
+  block the guest polling loop.
+- Guest preview polling runs at approximately 9 frames per second when the
+  local server and browser can keep up.
+- Photo capture resolution and the three-picture sequence are unchanged.
+
+Important operating requirement
+- Start the Flask application with start.bat.
+- Open the operator and guest pages from the same Flask origin, e.g.
+  http://127.0.0.1:5000 and http://127.0.0.1:5000/guest.
+- Do not open templates/guest.html directly with file:// or use an unrelated
+  Live Server port. The /api/live-frame endpoints must resolve to this Flask app.
+- For another device on the same LAN, use the host PC's LAN address and allow
+  the Flask server through the private-network firewall.
+
+Validation performed in this build environment
+- Python syntax compilation: PASS.
+- Node syntax check for operator.js: PASS.
+- Node syntax check for guest.js: PASS.
+- Static check confirms one webcam owner and existing HTTP relay architecture.
+- Flask integration test: NOT RUN (Flask is not installed in this environment).
+- Physical webcam, secondary monitor, and Windows browser test: NOT RUN; these
+  require the target computer and camera. No hardware test is claimed.
+
+Preserved
+- Main camera preview and full-resolution photo capture source.
+- Three-photo countdown/capture workflow and existing session API.
+- Photo strip, GIF, QR gallery, assets, and pastel theme.

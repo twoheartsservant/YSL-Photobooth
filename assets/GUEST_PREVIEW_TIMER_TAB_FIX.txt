@@ -1,0 +1,18 @@
+YSL OFFLINE PHOTOBOOTH — GUEST PREVIEW / COUNTDOWN / TAB UPDATE
+
+Changes in this revision:
+- Guest preparation countdown is now 5 seconds (5, 4, 3, 2, 1) for each photo.
+- Preparation clip JPEG frames are encoded asynchronously with canvas.toBlob instead of synchronous canvas.toDataURL, reducing main-thread stalls during the live preview.
+- Preparation clip sampling is three frames per second for five seconds (up to 15 frames). Existing backend minimum of 12 frames remains unchanged.
+- Operator-to-Guest preview relay target is 18 FPS rather than 24 FPS to reduce continuous JPEG encoding and HTTP upload pressure. The operator's Main camera preview and original capture code are unchanged.
+- Guest page browser tab title is now “Young Servants of the Lord” and the local YSL Logo.png is used as its favicon / touch icon.
+- Guest stylesheet and script cache versions are incremented to v7.
+
+Photo capture still uses the full available Guest preview dimensions and JPEG quality .95. The Main camera and its capture path were not changed.
+
+Validation performed:
+- JavaScript syntax checks for operator.js and guest.js.
+- Python bytecode compile checks for app.py and test_app.py.
+- ZIP integrity check.
+
+A physical webcam / browser test was not possible in this environment. Verify on the actual photobooth PC after replacing the project and restarting start.bat.

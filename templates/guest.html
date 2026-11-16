@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#D9EFF9">
+  <meta name="application-name" content="Young Servants of the Lord">
+  <title>Young Servants of the Lord</title>
+  <link rel="icon" type="image/png" href="/static/assets/Logo.png?v=ysl-tab-logo-v1">
+  <link rel="apple-touch-icon" href="/static/assets/Logo.png?v=ysl-tab-logo-v1">
+  <link rel="stylesheet" href="/static/css/style.css?v=ysl-responsive-1080x680-v1">
+</head>
+<body class="guest-body pastel-guest">
+  <a class="guest-brand" href="/guest" aria-label="YSL Valencia home"><img src="/static/assets/Logo.png" alt="Young Servants of the Lord"></a>
+  <div class="guest-camera-global" id="cameraStage">
+    <img id="guestCameraFrame" alt="Live camera preview" decoding="async" fetchpriority="high" draggable="false">
+    <div class="camera-vignette"></div>
+    <span id="guestCameraStatus" class="camera-status">CONNECTING TO CAMERA…</span>
+    <div class="camera-preparing hidden" id="cameraPreparing" role="status" aria-live="polite"><i></i><span>Preparing your photos…</span></div>
+    <div class="capture-flash" id="captureFlash"></div>
+  </div>
+
+  <section class="history-panel pastel-history" id="guestHistoryPanel" aria-label="Photo session history">
+    <div class="history-heading"><span>YOUR PHOTO MOMENTS</span><small id="historyCount">0 OF 3 CAPTURED</small></div>
+    <div class="history-slots" id="historySlots">
+      <div class="history-slot"><b>01</b><span class="history-icon">＋</span><small>PHOTO 1</small></div>
+      <div class="history-slot"><b>02</b><span class="history-icon">＋</span><small>PHOTO 2</small></div>
+      <div class="history-slot"><b>03</b><span class="history-icon">＋</span><small>PHOTO 3</small></div>
+    </div>
+  </section>
+
+  <main class="guest-overlay welcome-overlay" id="welcome">
+    <div class="welcome-copy">
+      <p class="eyebrow">YOUNG SERVANTS OF THE LORD</p><h1>GET READY FOR YOUR PHOTO!</h1>
+      <p>Position yourself in front of the camera, find your best pose, and get comfortable.</p>
+    </div>
+    <button class="start-button pastel-start" id="guestStart" aria-label="Start photo session"><span class="camera-glyph" aria-hidden="true"><svg viewBox="0 0 48 48" focusable="false"><path d="M8 15h7l3-5h12l3 5h7a3 3 0 0 1 3 3v20a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V18a3 3 0 0 1 3-3Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="27" r="8" fill="none" stroke="currentColor" stroke-width="3"/></svg></span></button>
+    <p class="tap-label">PRESS START WHEN YOU’RE READY</p><p id="guestWelcomeMessage" class="guest-message">Connecting to the live camera preview…</p>
+  </main>
+
+  <main class="guest-overlay capture-overlay hidden" id="captureScreen">
+    <div class="capture-topline"><span class="eyebrow">YSL PHOTOBOOTH</span><span id="photoCounter">PHOTO 1 OF 3</span></div>
+    <label class="mirror-control" for="mirrorCamera"><input id="mirrorCamera" type="checkbox" checked><span class="mirror-switch" aria-hidden="true"></span><span>Mirror Camera</span></label>
+    <div class="countdown-wrap"><div class="countdown hidden" id="countdown">3</div><p id="guestInstruction">Get ready for your first photo!</p></div>
+    <div class="capture-bottom"><div class="capture-progress" id="steps"><i class="step"></i><i class="step"></i><i class="step"></i></div><p id="progressText">0 / 3 photos captured</p></div><button class="start-button pastel-start active-session-start" id="captureStart" aria-label="Start automatic photo capture"><span class="camera-glyph" aria-hidden="true"><svg viewBox="0 0 48 48" focusable="false"><path d="M8 15h7l3-5h12l3 5h7a3 3 0 0 1 3 3v20a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V18a3 3 0 0 1 3-3Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="27" r="8" fill="none" stroke="currentColor" stroke-width="3"/></svg></span></button><p class="tap-label active-session-tap" id="activeTapLabel">TAP TO START</p>
+  </main>
+
+  <main class="guest-overlay results-overlay hidden" id="completeScreen">
+    <div class="results-header"><div><p class="eyebrow">SESSION COMPLETE</p><h1>YOUR LITTLE MOMENTS</h1></div></div>
+    <div class="results-layout">
+      <section class="results-photos">
+        <h2>YOUR PHOTOS</h2><div class="photo-trio" id="resultPhotos"></div>
+        <div class="strip-preview"><span>PHOTO STRIP</span><img id="guestFinalPreview" alt="Finished YSL photo strip"></div>
+      </section>
+      <section class="results-actions">
+        <div class="flashback-card"><div class="flashback-title"><h2>YOUR LITTLE MOMENTS</h2><span>GIF FLASHBACK</span></div><img id="flashbackGif" alt="Animated flashback of your three captured photos"><a id="saveGif" class="mini-link" href="#" download> SAVE GIF </a></div>
+        <div class="qr-card"><div><h2>SCAN TO VIEW & SAVE</h2><p class="wifi-reminder"><strong>IMPORTANT:</strong> Before scanning the QR code, connect your phone to the Wi-Fi network named <strong>YSL PHOTOBOOTH</strong>.</p><p id="qrMessage">Preparing your photo gallery…</p><a id="galleryLink" class="mini-link" href="#" target="_blank" rel="noopener">OPEN PRIVATE PHOTO GALLERY</a></div><img id="guestFinalQr" class="final-qr hidden" alt="QR code for your photo gallery"></div>
+        <div class="action-buttons"><button class="output-button primary-output" id="savePhotos" type="button">DOWNLOAD ALL PHOTOS</button><button class="output-button" id="saveGifButton" type="button">DOWNLOAD GIF</button><button class="output-button" id="saveStrip">DOWNLOAD PHOTO STRIP</button><button class="output-button quiet-output" id="newSession">NEW SESSION</button></div>
+        <p id="saveMessage" class="guest-message"></p><p id="guestDeliveryMessage" class="guest-message"></p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="ysl-credits" id="yslCredits">
+    <strong>YOUNG SERVANTS OF THE LORD (YSL)</strong><span>Follow us and stay connected</span>
+    <nav aria-label="YSL social media">
+      <a href="https://www.facebook.com/YSLValencia" target="_blank" rel="noopener" aria-label="Facebook YSL Valencia"><img src="/static/assets/facebook.png" alt=""> YSL Valencia</a>
+      <a href="https://www.instagram.com/ysl.valencia/" target="_blank" rel="noopener" aria-label="Instagram YSL Valencia"><img src="/static/assets/instagram.png" alt=""> YSL Valencia</a>
+      
+  </footer>
+  <script src="/static/js/guest.js?v=ysl-always-on-standby-v1"></script>
+</body>
+</html>

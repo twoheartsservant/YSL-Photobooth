@@ -1,0 +1,25 @@
+YSL OFFLINE PHOTOBOOTH — RESPONSIVE SECONDARY SCREEN UPDATE
+
+Reference layout: 1080 x 680 (responsive reference only; no fixed/minimum 1080px width).
+
+Updated files:
+- templates/guest.html: stylesheet cache key updated so browsers fetch the responsive CSS.
+- static/css/style.css: appended guest-page-only responsive rules for viewport sizing, camera frame, standby copy, start control, photo history, status label, credits, portrait tablets, compact landscape screens, and results scrolling.
+
+Preserved:
+- Existing colors, branding, markup, IDs, and screen flow.
+- Existing guest.js and operator.js camera relay, countdown, capture, QR, and download logic (not modified).
+- Camera preview uses object-fit: contain so the received camera frame is not stretched or cropped.
+
+Responsive behavior:
+- 1080 x 680 is the reference composition, not a hard-coded canvas.
+- Wide monitors and laptops use percentage-based layout sizing and capped camera dimensions.
+- Portrait tablets and phones use a vertically adjusted layout.
+- Short landscape displays reclaim vertical space.
+- Viewport-height rules use dvh when supported, with vh fallback.
+
+Validation:
+- CSS syntax and HTML/JS structure should be checked in the deployment environment.
+- Automated Flask test_app.py could not run in this environment because Flask is not installed.
+- Browser viewport screenshots could not be captured because the local browser environment blocked local file/HTTP navigation.
+- Camera stream behavior was not altered; please verify on the actual secondary device after deployment.

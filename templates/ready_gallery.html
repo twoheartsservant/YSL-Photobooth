@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f5faff"><title>YSL Valencia · Ready Gallery</title><link rel="stylesheet" href="/static/css/gallery.css?v=ysl-private-qr-pastel-v1"></head>
+<body><main class="wrap"><header class="top"><div class="brand"><img src="/static/assets/Logo.png" alt="YSL Valencia logo"><div><div class="eyebrow">YOUNG SERVANTS OF THE LORD</div><h1>Ready Gallery</h1><p>Review, retake, or edit each session before saving it.</p></div></div><nav class="nav"><a class="btn secondary" href="/guest">Open Photobooth</a><a class="btn secondary" href="/finished-photos">Finished Photos</a><a class="btn" href="/">Operator Dashboard</a></nav></header>
+<section class="section" aria-label="Find a cloud session"><form id="cloudSessionSearch" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><label for="cloudSessionId"><strong>Search Cloud Session ID</strong></label><input id="cloudSessionId" name="sessionId" autocomplete="off" placeholder="YYYYMMDD-HHMMSS-xxxxxx" maxlength="23" style="flex:1;min-width:220px;padding:12px;border:1px solid #A7D8F0;border-radius:10px"><button class="btn" type="submit">Search</button><span id="cloudSearchResult" role="status" aria-live="polite"></span></form><img id="cloudSessionStrip" alt="Cloud session photo strip" hidden style="display:block;max-width:260px;width:100%;margin-top:14px;border-radius:12px"><div id="cloudSessionMeta" style="margin-top:8px"></div></section>
+{% if sessions %}<section class="grid" aria-label="Ready photo sessions">{% for item in sessions %}<article class="card{% if item.selected %} selected{% endif %}" id="session-{{ item.session_id }}"><a href="{{ item.gallery }}" aria-label="Open Ready Gallery session {{ item.session_id }}"><img class="preview" src="{{ item.preview }}" loading="lazy" alt="Ready YSL Valencia photo preview"></a><div class="meta"><strong>YSL Valencia · Ready to Review</strong><span>{{ item.captured_at.replace('T',' · ') }} · {{ item.photo_count }} / 3 photos</span></div><div class="actions"><a class="btn" href="{{ item.gallery }}">Review & Edit</a><button class="btn secondary regenerate-qr" type="button" data-session="{{ item.session_id }}">Generate QR</button>{% if item.gif_download %}<a class="btn secondary" href="{{ item.gif_download }}" download>Download GIF</a>{% endif %}<button class="btn danger delete-session" type="button" data-session="{{ item.session_id }}">Delete</button></div></article>{% endfor %}</section>
+{% else %}<section class="empty"><h2>Nothing in Ready Gallery yet</h2><p>After three photos are captured, they will appear here for review.</p><a class="btn" href="/guest">Start a Photobooth Session</a></section>{% endif %}
+<div class="social"><a href="https://www.facebook.com/YSLValencia" target="_blank" rel="noopener"><img src="/static/assets/facebook.png" alt="">YSL Valencia</a><a href="https://www.instagram.com/ysl.valencia/" target="_blank" rel="noopener"><img src="/static/assets/instagram.png" alt="">YSL Valencia</a><a id="websiteSocial" target="_blank" rel="noopener"><img src="/static/assets/websiste.png" alt="">Website</a></div><footer class="foot">YSL Valencia · Sessions stay on this photobooth computer</footer></main><script>
+
+document.getElementById('cloudSessionSearch')?.addEventListener('submit',async event=>{
+  event.preventDefault();const input=document.getElementById('cloudSessionId');const output=document.getElementById('cloudSearchResult');const sid=input.value.trim();
+  if(!/^\d{8}-\d{6}-[0-9a-f]{6}$/.test(sid)){output.textContent='Enter a valid session ID.';return;}
+  output.textContent='Searching…';
+  try{const response=await fetch(`/api/cloud/session/${encodeURIComponent(sid)}`);const data=await response.json();if(!response.ok)throw new Error(data.message||'Session not found.');output.textContent=`Found · ${data.status} · ${data.photoCount} photos · Strip: ${data.hasStrip?'Yes':'No'} · GIF: ${data.hasGif?'Yes':'No'}`;const preview=document.getElementById('cloudSessionStrip');preview.hidden=!data.hasStrip;preview.src=data.hasStrip?`/api/cloud/session/${encodeURIComponent(sid)}/strip?v=${Date.now()}`:'';document.getElementById('cloudSessionMeta').textContent=`Session ID: ${data.sessionId} · Updated: ${data.updatedAt||'—'}`;}
+  catch(error){output.textContent=error.message;}
+});
+
+document.querySelectorAll('.regenerate-qr').forEach(button=>button.addEventListener('click',async()=>{
+  const sid=button.dataset.session, original=button.textContent;
+  button.disabled=true;button.textContent='Generating…';
+  try{
+    const response=await fetch(`/api/saved-session/${encodeURIComponent(sid)}/qr`,{method:'POST'});
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.message||'Could not generate QR.');
+    const win=window.open(data.qr+'?v='+Date.now(),'_blank','noopener');
+    if(!win){const link=document.createElement('a');link.href=data.qr;link.target='_blank';link.rel='noopener';link.textContent='Open generated QR';button.after(link);}
+    button.textContent='QR Generated';
+  }catch(error){alert(error.message);button.textContent=original;}
+  finally{button.disabled=false;}
+}));
+fetch('/api/config').then(r=>r.json()).then(c=>{if(c.website_url)document.getElementById('websiteSocial').href=c.website_url}).catch(()=>{});
+document.querySelectorAll('.delete-session').forEach(button=>button.addEventListener('click',async()=>{const sid=button.dataset.session;if(!confirm('Permanently delete this ready session, its photos and its GIF preview? This cannot be undone.'))return;button.disabled=true;try{const response=await fetch(`/api/saved-session/${encodeURIComponent(sid)}`,{method:'DELETE'});const data=await response.json();if(!response.ok)throw new Error(data.message||'Could not delete this session.');document.getElementById(`session-${sid}`)?.remove();if(!document.querySelector('.card'))location.reload();}catch(error){alert(error.message);button.disabled=false;}}));
+const selected=new URLSearchParams(location.search).get('session');if(selected){const card=document.getElementById(`session-${selected}`);if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.classList.add('selected')}}
+</script></body></html>

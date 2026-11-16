@@ -1,0 +1,21 @@
+YSL VALENCIA PHOTOBOOTH — FINAL FIXES AND VALIDATION
+===================================================
+
+Implemented in the existing project (no full redesign):
+- Replaced both assets/Logo.png and static/assets/Logo.png with the supplied official Logo.png byte-for-byte. Existing photo/template/icon assets were left untouched.
+- Kept the official logo proportional and transparent across the UI; added subtle CSS drop shadows. The exported photo strip now composites a soft shadow behind the original transparent logo on both strip panels.
+- The GIF generator continues to use the same official logo and local social icons, with refined serif typography and an unobtrusive shadowed logo treatment. Original captured photos are not filtered or modified.
+- Kept the main-screen shutter wired to the existing captureFromMain() workflow. The single handler retains its countdown, busy lock, camera-frame capture, and session upload. The button is a compact white circle at the bottom-center of the preview.
+- SESSION COMPLETE retains photo previews, strip/GIF previews, downloads, QR and social links. Facebook and Instagram links are read from config.json and open in new tabs.
+- Credits now have a transparent background with readable dark text and a light text shadow.
+- Added configurable `social_links` and `photo_share_retention_days` settings. The default link lifetime is 30 days. Expired/unavailable token links display a guest-facing message.
+- QR URLs use a configured public HTTPS `photo_share_base_url` when supplied. Without it, QR generation deliberately falls back to the local LAN address and the guest screen clearly says same-Wi-Fi access is required. The app does not claim local URLs work over mobile data.
+
+Internet sharing deployment requirement:
+Set `photo_share_base_url` to the HTTPS origin of a public deployment of this same Flask app, and deploy it with persistent storage for its `storage/` directory. No third-party cloud account, bucket, credentials, or deployment target was supplied, so no cloud provider has been falsely configured.
+
+Validation performed here:
+- Python source compilation passed (`python -m py_compile app.py`).
+- JavaScript syntax checks passed (`node --check` for operator.js and guest.js).
+- Official logo copies match the supplied file byte-for-byte.
+- Flask integration tests and physical camera / dual-monitor / QR scans could not be run in this environment because Flask is not installed. Run `pip install -r requirements.txt` and `python -m unittest -v test_app.py` on the photobooth computer, then test public HTTPS QR access on mobile data after deployment.

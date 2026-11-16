@@ -1,0 +1,9 @@
+YSL PHOTOBOOTH — GUEST CENTERING AND LAG FIX
+
+- Added a final authoritative CSS rule that centers the Guest camera preview both horizontally and vertically at desktop and mobile breakpoints.
+- Reduced countdown preparation sampling from 10 frames/second (30 encoded JPEG data URLs per shot) to 4 frames/second (12 samples per shot). This avoids repeatedly encoding 30 frames on the Guest main thread while the live MJPEG image is decoding.
+- Kept the 640x360 preparation canvas and reduced only the preparation-clip JPEG quality; this data is not used as the final captured photo.
+- Updated the preparation endpoint minimum to 12 samples to match the new 4 fps x 3 second countdown.
+- The actual captured photo path in captureCurrent() remains full naturalWidth/naturalHeight at JPEG quality 0.95. Operator/Main camera capture and the operator preview relay are unchanged.
+
+Testing: run the included tests and verify actual camera smoothness on the event computer. Physical camera performance cannot be certified in this build environment.

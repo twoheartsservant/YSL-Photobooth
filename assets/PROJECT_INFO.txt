@@ -1,0 +1,36 @@
+YSL VALENCIA OFFLINE PHOTOBOOTH
+
+This is the existing Flask-based local photobooth project. It retains the operator
+dashboard, guest camera, dual-screen previews, exactly-three-shot sequence,
+preparation-frame recording, photo strip artwork, branded animated GIF, QR gallery,
+local downloads, and session JSON storage.
+
+CURRENT WORKFLOW
+- After the third successfully saved photo, SESSION COMPLETE appears immediately.
+- Photo strip, GIF, and QR processing runs in a background worker; no timed redirect
+  to session_gallery.html occurs.
+- The guest can preview the three originals, strip and GIF, scan the private QR,
+  download all originals as a ZIP, download the GIF, or download the photo strip.
+- The local operator can review and edit sessions in Ready Gallery and Finished
+  Photos. Replacements and deletions update the actual files and session manifest.
+
+GUEST PRIVACY
+- QR URLs use unpredictable per-session bearer tokens, not session IDs.
+- Tokens expire after 30 days. Each photo, strip, GIF, and ZIP request validates
+  the token against the stored session manifest.
+- Session-ID-based media routes, archive pages, operator APIs and destructive
+  controls are restricted to localhost. Guest QR pages are read-only.
+- Phone upload has a separate session-scoped token which is invalidated when the
+  live session ends or is reset.
+
+BRANDING & DESIGN
+- assets/Logo.png is the official transparent logo and is kept proportional.
+- GIF frames include the logo at top-left and Facebook/Instagram identities at
+  bottom-center, without a banner.
+- Mirror Camera is applied once to preview and capture output.
+- The website uses pastel blue (#A7D8F0 / #D9EFF9), pastel yellow
+  (#FFF1A8 / #FFF9D9), white, and dark neutral text (#34495E).
+
+Run start.bat on Windows, or install requirements.txt and run app.py. Camera access
+requires a supported browser and camera permission. Phone QR upload requires both
+devices on the same Wi-Fi network.

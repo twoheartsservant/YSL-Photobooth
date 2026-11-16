@@ -1,0 +1,17 @@
+SECONDARY PHOTOBOOTH CAMERA FIX
+
+Changes:
+1. The embedded secondary-screen preview now explicitly allows camera and autoplay permissions.
+2. The guest camera requests a standard 16:9 1280x720 stream when the camera supports it.
+3. The secondary camera preview now uses object-fit: contain instead of cover. This restores the normal full camera frame and prevents the previous crop/zoom effect.
+4. Frontend asset cache versions were updated so the browser loads the corrected files.
+
+After extracting the update:
+- Close any already-open guest/secondary browser windows.
+- Restart the photobooth using start.bat.
+- Open the operator dashboard and click Connect Camera.
+- Click Launch Secondary Screen.
+- If the browser asks for camera permission, allow it for the local photobooth address.
+- If an old preview remains, refresh the operator dashboard and relaunch the secondary screen.
+
+Note: Camera permission is controlled by the browser/operating system. The app can request access but cannot silently grant it.

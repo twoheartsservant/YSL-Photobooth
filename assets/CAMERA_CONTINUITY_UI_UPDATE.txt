@@ -1,0 +1,27 @@
+YSL PHOTOBOOTH — CAMERA CONTINUITY + UI POLISH UPDATE
+
+Root cause identified
+- The guest workflow explicitly called stopCameraStream() at the beginning of prepareReadyGallery().
+- That removed the MJPEG image src and stopped health polling just after the third photo, so the guest/secondary preview disappeared during preparation even though the operator camera stream was still live.
+
+Fixes
+- Removed the preparation-time stream shutdown. The guest and secondary displays keep their MJPEG connection and health polling while the photo strip/GIF is generated.
+- Added a compact animated "Preparing your photos" indicator while retaining the camera frame.
+- Made the completed/preparation overlay translucent while the PREPARING state is active so the live camera remains visible behind the results layer.
+- Added explicit camera state tracking for INITIALIZING, REQUESTING_PERMISSION, READY, PREPARING, COUNTDOWN, CAPTURING, PAUSED, and ERROR across the operator/guest flow.
+- Operator startup now attempts the single camera connection even when enumerateDevices() returns devices without labels or initially returns an empty list; the browser permission prompt can populate the device list.
+- Existing one-owner camera stream and MJPEG relay architecture retained. No second webcam stream, framework, or external dependency added.
+- Added responsive layout, focus, disabled-button, reduced-motion, and spacing refinements using the existing YSL color identity.
+- Incremented HTML asset query versions to prevent stale browser cache use.
+
+Validation
+- PASS: node --check static/js/operator.js
+- PASS: node --check static/js/guest.js
+- PASS: python -m py_compile app.py test_app.py
+- PASS: static assertion that prepareReadyGallery() no longer calls stopCameraStream()
+- PASS: guest preparation indicator and PREPARING state hooks are present
+- NOT RUN: Flask integration/unit tests; Flask is not installed in the build environment.
+- NOT RUN: physical webcam, real browser, dual-monitor, and mobile device tests; those require the target Windows PC and hardware.
+
+Operational note
+- Start the application with start.bat and open both Operator and Guest from the same Flask origin. Do not open the guest template directly through file:// or a separate Live Server port.

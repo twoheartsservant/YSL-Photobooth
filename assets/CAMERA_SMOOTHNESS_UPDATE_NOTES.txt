@@ -1,0 +1,20 @@
+YSL OFFLINE PHOTOBOOTH — CAMERA SMOOTHNESS UPDATE
+
+Changes
+- Added a local MJPEG push endpoint for Guest and Secondary previews. Browsers decode the multipart stream natively instead of repeatedly polling JPEG files, creating Blob URLs, and decoding each frame in JavaScript.
+- The Flask relay retains one latest frame and increments a sequence counter. Each connected display waits for a newer sequence, so there is no server-side frame queue and no replay of old frames.
+- Added a lightweight preview-health endpoint. Guest/Secondary poll only metadata every 750 ms; JPEG image payloads are delivered by the stream.
+- Reworked the operator preview relay to use one requestAnimationFrame loop, skip frames while an upload is in flight, reuse its canvas, and keep its preview-only 1280px/quality settings. The Main camera element and full-resolution Main capture path are not changed.
+- Kept the Guest countdown, three-shot workflow, session preparation, private gallery links, and download endpoints intact.
+- Improved Guest/Secondary text contrast, camera sizing, countdown visibility, photo previews, QR instructions, button sizing/states, and responsive layout using the requested pastel palette.
+
+Important
+- The preview relay uses the same operator-owned camera stream; no second camera stream is opened.
+- The preview JPEG remains separate from the Main capture canvas. Main capture continues to use the original camera video source at its native dimensions and quality.
+- The Guest photo capture workflow continues to use the relayed preview image as in the existing project, at the same 1280px maximum width and JPEG quality as before this update.
+
+Validation
+- Python syntax checks: passed (app.py, test_app.py).
+- JavaScript syntax checks: passed (operator.js, guest.js).
+- Added a Flask smoke test verifying that the MJPEG stream serves only the latest frame after multiple updates.
+- Runtime Flask endpoint tests and physical camera/dual-monitor tests were not run in this environment because Flask is not installed here and no camera/monitor hardware is attached.

@@ -1,0 +1,45 @@
+YSL VALENCIA PHOTOBOOTH — FINAL BRANDING & CAPTURE FIXES
+Date: 2026-11-13
+
+CHANGES
+1. Official branding
+   - Confirmed static/assets/Logo.png is the uploaded official 1000 x 300 RGBA logo.
+   - Confirmed assets/Logo.png is byte-identical to the static copy.
+   - Generated GIFs and photo strips now prefer static/assets/Logo.png and retain a local fallback.
+   - Existing page logos continue to load from /static/assets/Logo.png with contain sizing.
+
+2. Main-screen camera capture
+   - Moved the existing main-screen capture control into the camera preview.
+   - Styled it as a small circular white shutter at the bottom center.
+   - Kept the existing capture handler, countdown, active-session checks, and busy guard.
+
+3. Guest completion social links
+   - Added a FOLLOW YSL VALENCIA block inside SESSION COMPLETE.
+   - Uses the existing project Facebook and Instagram URLs and bundled SVG icons.
+   - Opens links in a new tab with noopener/noreferrer protection.
+
+4. GIF branding
+   - Kept the existing 640 x 360 GIF frame dimensions and original photo footage pipeline.
+   - Applied a refined serif type treatment and balanced social footer.
+   - Added a subtle light logo backing to preserve contrast without modifying the official logo.
+
+5. Photo strips
+   - Kept the existing PHOTOBOOTH.png template, frame coordinates, and export dimensions.
+   - Kept proportional logo compositing in the lower clear margin of both strip columns.
+
+VALIDATION
+- Python syntax compilation: passed.
+- JavaScript syntax checks for operator.js, guest.js, and phone_camera.js: passed.
+- Official logo file identity check: passed.
+- GIF branding helper render test: passed at 640 x 360.
+- Photo-strip composition mock test: passed at original 1448 x 2048 dimensions.
+- Social-link and capture-control source checks: passed.
+- Flask integration/unit tests were not runnable in this build environment because Flask is not installed and package installation is unavailable offline. Run `python -m unittest -v test_app` after installing requirements on the photobooth PC.
+- Physical camera, monitor, printer, and smartphone hardware were not available for testing.
+
+
+SUPABASE PROJECT CONFIGURATION UPDATE (2026-11-13)
+- Filled in the supplied Supabase project URL and publishable key in config.json.
+- Updated backend authentication to support current sb_secret_* keys via SUPABASE_SECRET_KEY (apikey header only), while retaining legacy SUPABASE_SERVICE_ROLE_KEY support.
+- Added exact Windows setup steps and required Storage bucket names to ONLINE_SHARING_SETUP.txt.
+- No secret/service-role key was included in the ZIP.

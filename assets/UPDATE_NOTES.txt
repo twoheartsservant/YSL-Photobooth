@@ -1,0 +1,20 @@
+YSL VALENCIA PHOTOBOOTH — REVISION NOTES (13 NOV 2026)
+
+- Kept the existing Flask application, camera flow, session JSON storage, photo
+  strip artwork, and community assets.
+- Third capture now moves to SESSION COMPLETE immediately; strip/GIF generation
+  runs asynchronously and updates the same screen when ready.
+- Removed View My Photos, Retake Photos, and Continue to Gallery from completion.
+- Added unpredictable per-session QR bearer tokens with 30-day expiry.
+- Added token-validated guest-only view/download routes for original photos, GIF,
+  and strip. Legacy ID-only gallery and file routes are local-operator-only.
+- Added no-store/no-referrer/noindex headers to token-protected guest pages.
+- Secured phone upload with a separate session-scoped token.
+- ZIP download now contains only the three original captured photos.
+- Kept GIF animated and branded every frame with the transparent Logo.png and
+  Facebook/Instagram icons and labels.
+- Kept mirror capture orientation consistent between preview and saved images.
+- Applied the requested pastel blue/pastel yellow site-wide stylesheet overrides.
+- Static validation: Python compilation and Node JavaScript syntax checks passed.
+- Full runtime/integration test execution was unavailable because Flask and
+  screeninfo dependencies could not be installed in this isolated environment.

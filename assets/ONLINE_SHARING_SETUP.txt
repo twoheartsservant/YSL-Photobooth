@@ -1,0 +1,49 @@
+YSL VALENCIA PHOTOBOOTH - ONLINE QR SHARING SETUP
+
+PROJECT DETAILS ALREADY FILLED IN config.json
+- Supabase project URL: https://ytudmzyvtdepuhamcegq.supabase.co
+- Publishable key: saved in config.json. This key is public by design and is not used for privileged photo uploads.
+
+The application uploads each finished photo strip and GIF to a PRIVATE Supabase Storage bucket. It creates expiring signed HTTPS URLs for those original-quality files. A separate PUBLIC bucket stores only a small mobile guest webpage; that page contains the expiring asset links and displays a friendly expired-link message after the retention period. The QR is generated only after all uploads succeed. If cloud setup is missing or upload fails, local files are still saved and no QR is shown.
+
+REQUIRED ONE-TIME SETUP IN SUPABASE
+1. Open your Supabase project: https://supabase.com/dashboard/project/ytudmzyvtdepuhamcegq
+2. Open Storage and create a PRIVATE bucket named ysl-photobooth. This bucket holds the photo strip and GIF. Do not make it public.
+3. Create a PUBLIC bucket named ysl-photobooth-pages. This bucket holds only the tokenized guest HTML pages; never upload photo/GIF assets to this public bucket.
+4. In Project Settings > API Keys, copy the Secret key (starts with sb_secret_). Do NOT use the publishable key for this step.
+
+ADD THE SECRET KEY ON THE PHOTOBOOTH LAPTOP (WINDOWS)
+1. Open the YSL photobooth folder.
+2. Click the folder address bar, type cmd, and press Enter.
+3. In the Command Prompt window, enter these commands. Replace only YOUR_SECRET_KEY with the secret key copied from Supabase:
+
+   set SUPABASE_URL=https://ytudmzyvtdepuhamcegq.supabase.co
+   set SUPABASE_SECRET_KEY=YOUR_SECRET_KEY
+   start.bat
+
+4. Keep using that same Command Prompt window to start the photobooth. The variables set with `set` apply to that window and its child process. If you close it, repeat the commands next time.
+5. Restart the Flask server after changing credentials.
+
+OPTIONAL PERSISTENT WINDOWS SETUP
+To save the variables for future Command Prompt windows, run these once (replace YOUR_SECRET_KEY):
+
+   setx SUPABASE_URL "https://ytudmzyvtdepuhamcegq.supabase.co"
+   setx SUPABASE_SECRET_KEY "YOUR_SECRET_KEY"
+
+Then close and reopen Command Prompt before running start.bat. Do not put the secret key in config.json, Python source, HTML, JavaScript, screenshots, or a shared ZIP. Anyone with this key can access privileged project data. If it is exposed, rotate it in Supabase.
+
+OPTIONAL BUCKET OVERRIDES
+- SUPABASE_STORAGE_BUCKET=ysl-photobooth
+- SUPABASE_PUBLIC_PAGES_BUCKET=ysl-photobooth-pages
+
+RETENTION AND SECURITY
+- The secret key is read only by app.py on the backend. The publishable key in config.json is not a substitute for it.
+- New sb_secret_* keys are sent using the apikey header only; legacy service_role JWT keys remain supported through SUPABASE_SERVICE_ROLE_KEY.
+- Each session upload uses a fresh unpredictable object prefix.
+- Strip and GIF objects remain private and are available only through signed URLs.
+- Signed asset URLs expire after the configured retention period. The public HTML page contains no image data and displays an expired message after that time.
+- Expiry prevents access; it does not automatically delete old objects. Configure a Supabase Storage lifecycle/cleanup process if physical deletion is required.
+- Guests do not need the photobooth Wi-Fi or an app; they need an internet connection.
+
+LOCAL/OFFLINE MODE
+Capture, local photo-strip/GIF generation, local preview, local downloads and printing continue to work without cloud credentials. Online sharing reports a clear setup/upload error and does not create a misleading local-network QR.

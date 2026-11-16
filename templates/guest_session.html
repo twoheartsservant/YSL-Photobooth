@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#D9EFF9"><title>YSL Valencia · Your Photos</title>
+  <link rel="stylesheet" href="/static/css/gallery.css?v=ysl-private-qr-pastel-v1">
+  <style>
+    .guest-only{max-width:980px;margin:0 auto}.guest-only .top{align-items:center}.guest-only .nav{display:none}
+    .guest-note{padding:14px 18px;border:1px solid #A7D8F0;border-radius:14px;background:#FFF9D9;color:#34495E;margin:18px 0}
+    .guest-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+    .guest-photo{margin:0;padding:12px;background:#FFFFFF;border:1px solid #A7D8F0;border-radius:16px;box-shadow:0 8px 24px rgba(52,73,94,.08)}
+    .guest-photo img{width:100%;display:block;aspect-ratio:4/3;object-fit:cover;border-radius:10px}
+    .guest-photo figcaption{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 2px 0;font-weight:700;color:#34495E}
+    .guest-photo a,.guest-download{color:#34495E;font-weight:700;text-decoration:none}
+    .guest-downloads{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.guest-downloads .btn{display:inline-flex;align-items:center;justify-content:center}
+    .guest-output{max-width:520px;width:100%;display:block;margin:12px auto;border-radius:14px;box-shadow:0 12px 32px rgba(52,73,94,.10)}
+  </style>
+</head>
+<body><main class="wrap guest-only">
+  <header class="top"><div class="brand"><img src="/static/assets/Logo.png" alt="YSL Valencia logo"><div><div class="eyebrow">YOUNG SERVANTS OF THE LORD</div><h1>Your Photobooth Photos</h1><p>Your private YSL Valencia session</p></div></div></header>
+  <div class="guest-note"><strong>IMPORTANT REMINDER!</strong><br>Please connect your device to the WIFI NETWORK: <strong>YSL PHOTOBOOTH</strong> before scanning the QR code to access and save your photos.<br>Make sure you are connected to the YSL PHOTOBOOTH WiFi network to open your private gallery.</div>
+  <div class="guest-note">This page shows only the photos from your session. You can view and download them; editing and deleting are not available here.</div>
+  <section class="section"><h2>YOUR PHOTOS · {{ photos|length }} / 3</h2>
+    <div class="guest-photos">{% for slot in range(1,4) %}{% set name=photos.get(slot|string) %}{% if name %}
+      <figure class="guest-photo"><a href="/g/{{ access_token }}/photo/{{ name }}" target="_blank" rel="noopener"><img src="/g/{{ access_token }}/photo/{{ name }}" alt="Your YSL photo {{ slot }}"></a>
+      <figcaption><span>PHOTO {{ slot }}</span><a href="/g/{{ access_token }}/download/photo/{{ name }}">Download</a></figcaption></figure>
+    {% endif %}{% endfor %}</div>
+  </section>
+  {% if final %}<section class="section"><h2>YOUR FINISHED PHOTO STRIP</h2>{% set strip_name=final.get('filename') or final.get('png','').split('/')[-1] %}{% if strip_name %}<img class="guest-output" src="/g/{{ access_token }}/view/strip-png?v={{ revision }}" alt="Your finished photo strip">{% endif %}
+    <div class="guest-downloads">{% if final.get('jpg') %}<a class="btn" href="/g/{{ access_token }}/final/strip">Download Photo Strip</a>{% endif %}{% if final.get('gif_filename') %}<a class="btn secondary" href="/g/{{ access_token }}/final/gif">Download GIF</a>{% endif %}<a class="btn secondary" href="/g/{{ access_token }}/download/all.zip">Download All (3 Photos + GIF + Photo Strip)</a></div>
+    {% if final.get('gif_filename') %}<h2>YSL VALENCIA · PHOTO MOMENT</h2><img class="guest-output" src="/g/{{ access_token }}/view/gif?v={{ revision }}" alt="Your animated photo moment">{% endif %}
+  </section>{% else %}<div class="guest-note">Your finished photo strip is still being prepared. Please ask the event operator for assistance.</div>{% endif %}
+  <div class="social"><a href="https://www.facebook.com/YSLValencia" target="_blank" rel="noopener"><img src="/static/assets/facebook.png" alt="">YSL Valencia</a><a href="https://www.instagram.com/ysl.valencia/" target="_blank" rel="noopener"><img src="/static/assets/instagram.png" alt="">YSL Valencia</a></div>
+  <footer class="foot">YSL Valencia · Thank you for joining us</footer>
+</main></body></html>

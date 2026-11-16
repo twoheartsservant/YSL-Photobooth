@@ -1,0 +1,129 @@
+YSL VALENCIA PHOTOBOOTH — GOOGLE DRIVE ONLINE GALLERY
+=====================================================
+
+This update keeps the existing Flask photobooth, camera, guest display, photo-strip
+artwork, GIF generator, and local storage. It adds an optional Google Drive upload
+queue. The public QR is created ONLY after Google Drive confirms that the session
+gallery has been published.
+
+IMPORTANT FOR TOMORROW
+----------------------
+You must complete the one-time Google Apps Script setup below while signed in to
+the Google account that owns the Drive storage. The project ZIP cannot authorize
+your Google account or deploy a Web App for you.
+
+A mobile hotspot is supported, but uploads use mobile data. Uploads happen after
+Finish & Save, not during live camera preview. Keep the computer online until the
+status says "Online gallery ready". If the hotspot drops, the local files remain
+saved and the queue retries automatically.
+
+PART A — CREATE THE GOOGLE DRIVE BACKEND
+----------------------------------------
+1. Sign in to the Google account whose Drive should store the event photos.
+2. Open https://script.google.com/ and create a NEW project.
+3. Open the Code.gs file in this ZIP:
+      google_apps_script/Code.gs
+   Replace the starter code in the Apps Script editor with the entire Code.gs file.
+4. In Apps Script, open Project Settings (gear icon) > Script Properties > Add script
+   property. Add:
+      Property: YSL_UPLOAD_SECRET
+      Value: [a new long random secret]
+   Generate one on Windows PowerShell with:
+      [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }))
+   Copy the exact same value into config.json in Part B.
+5. Optional: add YSL_ROOT_FOLDER_ID if you already made a dedicated Drive folder and
+   want to use it. Otherwise leave it out. The script creates "YSL Valencia Photobooth"
+   automatically on its first connection.
+6. Click Deploy > New deployment.
+7. Select type: Web app.
+8. Set "Execute as" to: Me.
+9. Set "Who has access" to: Anyone.
+   This is required so guests can open the gallery without Google sign-in. If your
+   Google Workspace administrator blocks public web apps or "Anyone" sharing, this
+   account cannot provide public guest galleries; use a personal Google account or
+   ask the administrator to permit public link sharing.
+10. Click Deploy, authorize the requested Drive permissions, and copy the Web app URL.
+    It must be the URL ending in /exec (not the editor URL).
+
+PART B — CONFIGURE THE PHOTOBOOTH
+---------------------------------
+1. Open config.json beside app.py.
+2. Set these three values:
+      "cloud_upload_enabled": true,
+      "google_drive_web_app_url": "PASTE_YOUR_DEPLOYED_/exec_URL",
+      "google_drive_shared_secret": "PASTE_THE_EXACT_YSL_UPLOAD_SECRET"
+3. Save config.json and restart the photobooth application.
+4. On the photobooth computer, open:
+      http://127.0.0.1:5000/api/cloud/test
+   A successful response reports "Google Drive connection is ready" and the Drive
+   root folder name. Do not run the event until this test succeeds.
+5. If you edit Code.gs later, use Deploy > Manage deployments > Edit, select New version,
+   and deploy again. Keep the same /exec URL if updating the existing deployment.
+
+EVENT WORKFLOW
+--------------
+Capture 3 photos > Finish & Save Session.
+The project immediately keeps all local originals and generated strip/GIF. It then
+uploads the three original photos, the finished JPG strip, and the GIF to a unique
+Google Drive session folder. The guest QR remains hidden until all five uploads and
+the publish step succeed. The QR opens the Google Apps Script HTTPS gallery, so
+guests can use mobile data or any Wi-Fi network.
+
+The Google Drive folder layout is:
+  YSL Valencia Photobooth/
+      YYYYMMDD-HHMMSS-xxxxxx/
+          Photo-1.jpg
+          Photo-2.jpg
+          Photo-3.jpg
+          Photo-Strip.jpg
+          YSL-Flashback.gif
+
+RETRY / OFFLINE BEHAVIOUR
+-------------------------
+- The local session files are never deleted by this integration.
+- If the hotspot disconnects, upload status stays pending and retries automatically
+  with increasing delays, then every minute for up to 24 hours.
+- If the app is restarted, completed local sessions marked pending can be retried
+  from the local API:
+      POST http://127.0.0.1:5000/api/cloud/retry/SESSION_ID
+  Use the session ID shown in the local Finished Photos page or storage folder.
+- Do not share a QR until the QR is visible in the operator screen.
+- The local phone-pairing QR is still a same-network feature; it is NOT the guest
+  download QR. Only the finished-session QR is internet-accessible.
+
+SECURITY / PRIVACY
+------------------
+- The shared secret stays in config.json on the photobooth computer and in Apps
+  Script Project Properties. Do not paste it into frontend JavaScript, public chats,
+  screenshots, or the website.
+- Guest access uses a long random token. Each gallery shows only its own session files.
+- Only the individual files are shared as "Anyone with the link — Viewer"; the parent
+  Drive folder is not made public.
+- Anyone with a guest QR can view and download that session. Treat the QR like a
+  private share link. Do not post it publicly.
+- Drive sharing policies on managed accounts may prevent anonymous sharing.
+- Google Drive account storage usage is reported after publish. Google Apps Script
+  exposes total Drive storage used, but this implementation cannot reliably report
+  the account's remaining quota from DriveApp alone.
+- Optional retention cleanup is disabled by default. To enable it, add Script Property
+  YSL_RETENTION_DAYS with a positive number (for example 30), then add a time-driven
+  daily trigger for cleanupExpiredSessions in Apps Script. It trashes expired session
+  folders and their files in Drive. Do not enable this until you have chosen a policy.
+
+HOTSPOT / EVENT CHECKLIST
+-------------------------
+[ ] Finish the Apps Script deployment and config.json values before event day.
+[ ] Open /api/cloud/test and confirm Google Drive connection.
+[ ] Check that the Google account has enough free Drive storage.
+[ ] Keep the photobooth PC plugged into power and hotspot signal stable.
+[ ] Run one complete test session; scan its QR on a phone with Wi-Fi turned OFF
+    (mobile data only), then download the strip and GIF.
+[ ] Confirm the guest phone can open the page without signing in.
+[ ] Keep the PC online until all session upload statuses are ready.
+[ ] Keep the storage/original, storage/final, and storage/sessions folders as backups.
+
+NO FALSE SUCCESS
+----------------
+Without the deployed /exec URL and matching secret, cloud upload remains disabled,
+and no public QR is generated. The project does not substitute a local IP or a
+fabricated URL. Local capture, generation, and saving continue to work.
