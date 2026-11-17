@@ -243,6 +243,16 @@ def apply_cloud_guest_link(sid, saved):
         return False
     token = get_or_create_access_token(sid, saved)
     url = f"{cloud_public_url()}/g/{sid}/{token}"
+    parsed_url = urlparse(url)
+    hostname = (parsed_url.hostname or "").lower()
+    if (parsed_url.scheme != "https" or not hostname or hostname in ("localhost", "127.0.0.1", "::1")
+            or not parsed_url.path.endswith(f"/g/{sid}/{token}")):
+        previous = saved.get("cloudSync") or {}
+        saved["cloudSync"] = {"status": "pending", "attempts": int(previous.get("attempts", 0)) + 1,
+                              "retryAfter": time.time() + 60,
+                              "lastError": "The configured cloud public URL is not a valid HTTPS gallery address."}
+        write_session_meta(sid, saved)
+        return False
     qr_name = f"{sid}_finished_qr.png"
     qr_path = STORE / "qr" / qr_name
     qrcode.make(url, box_size=8, border=2).save(qr_path)
@@ -668,49 +678,55 @@ def _load_social_icon(name, size=(22, 22)):
         return None
 
 
-def _brand_gif_frame(frame, logo, facebook_icon=None, messenger_icon=None):
-    """Bake transparent YSL branding into each frame without adding a banner."""
+def _brand_gif_frame(frame, logo, facebook_icon=None, instagram_icon=None):
+    """Bake a clear YSL logo and the two approved social identities into each GIF frame."""
     canvas = frame.convert("RGBA")
     draw = ImageDraw.Draw(canvas, "RGBA")
 
-    # Small transparent logo, kept proportional and clear of the frame edge.
+    # The source logo is portrait-oriented. Give it a portrait-sized box so it
+    # does not collapse to a tiny mark when constrained by a landscape box.
     logo_copy = logo.copy().convert("RGBA")
-    logo_copy.thumbnail((78, 28), Image.Resampling.LANCZOS)
+    logo_copy.thumbnail((84, 68), Image.Resampling.LANCZOS)
     canvas.alpha_composite(logo_copy, (10, 9))
 
-    font = None
-    for font_name in ("DejaVuSans.ttf", "arial.ttf", "Arial.ttf"):
-        try:
-            font = ImageFont.truetype(font_name, 9)
-            break
-        except OSError:
-            continue
-    if font is None:
-        font = ImageFont.load_default()
+    def load_font(size):
+        for font_name in ("DejaVuSans.ttf", "arial.ttf", "Arial.ttf"):
+            try:
+                return ImageFont.truetype(font_name, size)
+            except OSError:
+                continue
+        return ImageFont.load_default()
 
-    # Two compact centered rows keep the social details readable without a
-    # footer strip, banner, or opaque container behind either icon or text.
-    rows = ((facebook_icon, "Facebook: YSL Valencia"),
-            (messenger_icon, "Messenger: YSL Valencia"))
-    row_gap, icon_size, text_gap = 13, 10, 4
-    row_top = canvas.height - (row_gap * 2) - 5
-    for index, (source_icon, label) in enumerate(rows):
+    title_font = load_font(10)
+    detail_font = load_font(8)
+    icon_size, text_gap, group_gap = 20, 6, 24
+
+    # Two horizontal groups, each with its own icon and two readable text lines.
+    groups = [
+        (facebook_icon, ("Facebook", "YSL Valencia")),
+        (instagram_icon, ("YSL Valencia", "@ysl.valencia")),
+    ]
+    measured = []
+    for source_icon, lines in groups:
+        widths = [draw.textbbox((0, 0), line, font=font)[2] for line, font in zip(lines, (title_font, detail_font))]
+        measured.append((source_icon, lines, icon_size + text_gap + max(widths)))
+    total_width = sum(item[2] for item in measured) + group_gap
+    left = max(8, (canvas.width - total_width) // 2)
+    top = canvas.height - icon_size - 10
+    for source_icon, lines, group_width in measured:
         icon = source_icon.copy().convert("RGBA") if source_icon else None
         if icon:
             icon.thumbnail((icon_size, icon_size), Image.Resampling.LANCZOS)
-        text_box = draw.textbbox((0, 0), label, font=font, stroke_width=1)
-        text_width = text_box[2] - text_box[0]
-        group_width = icon_size + text_gap + text_width
-        left = max(6, (canvas.width - group_width) // 2)
-        top = row_top + index * row_gap
-        if icon:
             canvas.alpha_composite(icon, (left, top))
         else:
-            draw.rounded_rectangle((left, top, left + 9, top + 9), radius=2,
-                                   outline=(255, 255, 255, 240), width=1)
-        draw.text((left + icon_size + text_gap, top - 1), label, font=font,
-                  fill=(255, 255, 255, 255), stroke_width=2,
-                  stroke_fill=(35, 55, 70, 210))
+            draw.rounded_rectangle((left, top, left + icon_size, top + icon_size), radius=4,
+                                   outline=(255, 255, 255, 240), width=2)
+        text_x = left + icon_size + text_gap
+        draw.text((text_x, top + 1), lines[0], font=title_font,
+                  fill=(255, 255, 255, 255), stroke_width=2, stroke_fill=(35, 55, 70, 220))
+        draw.text((text_x, top + 11), lines[1], font=detail_font,
+                  fill=(255, 255, 255, 255), stroke_width=2, stroke_fill=(35, 55, 70, 220))
+        left += group_width + group_gap
     return canvas.convert("RGB")
 
 def generate_flashback(photos, sid):
@@ -753,9 +769,9 @@ def generate_flashback(photos, sid):
         raise FileNotFoundError("The YSL logo is missing: static/assets/Logo.png")
     with Image.open(logo_path) as logo_source:
         logo=logo_source.convert("RGBA")
-    facebook_icon = _load_social_icon("facebook")
-    messenger_icon = _load_social_icon("messenger")
-    branded=[_brand_gif_frame(frame, logo, facebook_icon, messenger_icon) for frame in frames]
+    facebook_icon = _load_social_icon("facebook", size=(48, 48))
+    instagram_icon = _load_social_icon("instagram", size=(48, 48))
+    branded=[_brand_gif_frame(frame, logo, facebook_icon, instagram_icon) for frame in frames]
     # A single shared palette prevents color/palette shifts and flicker between frames.
     palette_source=branded[0].convert("P", palette=Image.Palette.ADAPTIVE, colors=256)
     palette=palette_source.getpalette()
@@ -945,8 +961,8 @@ def _build_outputs_for_session(sid, photos, existing_url="", request_host=None):
     if strip_logo_path.is_file():
         with Image.open(strip_logo_path) as logo_source:
             strip_logo=logo_source.convert("RGBA")
-            strip_logo.thumbnail((180,54),Image.Resampling.LANCZOS)
-            logo_y=max(0,template.height-70)
+            strip_logo.thumbnail((110,90),Image.Resampling.LANCZOS)
+            logo_y=max(0,template.height-105)
             for center_x in (int(template.width*0.28),int(template.width*0.72)):
                 template.alpha_composite(strip_logo,(max(0,center_x-strip_logo.width//2),logo_y))
     out_jpg=STORE/"final"/f"{sid}_strip.jpg"

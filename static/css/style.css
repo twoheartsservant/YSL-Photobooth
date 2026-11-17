@@ -3357,3 +3357,10 @@ img[src*="Logo-Circle"] {
   background: #fff7dc; border: 1px solid #d9b85b; color: #4c0a16;
   font-size: clamp(13px, 1.2vw, 16px); line-height: 1.45; font-weight: 600;
 }
+
+
+/* Final visibility corrections: preserve the portrait YSL mark without clipping it. */
+.pastel-guest .guest-brand { width: clamp(92px, 16vw, 160px) !important; max-width: 22vw !important; }
+.pastel-guest .guest-brand img { width: 100% !important; height: auto !important; max-width: 100% !important; max-height: clamp(62px, 12vh, 108px) !important; object-fit: contain !important; object-position: left top !important; transform: none !important; display: block !important; }
+.pastel-guest .qr-card .final-qr { width: clamp(116px, 15vw, 176px) !important; height: clamp(116px, 15vw, 176px) !important; min-width: 116px; object-fit: contain !important; flex: 0 0 auto; background: #fff !important; padding: 5px; border-radius: 8px; }
+@media (max-width: 600px) { .pastel-guest .guest-brand { width: 96px !important; } .pastel-guest .guest-brand img { max-height: 68px !important; } .pastel-guest .qr-card .final-qr { width: 112px !important; height: 112px !important; min-width: 112px; } }

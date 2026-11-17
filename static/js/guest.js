@@ -9,7 +9,7 @@ if (secondaryMode) document.body.classList.add("camera-secondary-mode");
 let stream = false, busy = false, cameraStarting = false, preparingSession = "", cameraState = "INITIALIZING";
 let frameHealthTimer = null, frameHealthBusy = false, frameStreamRetryTimer = null, lastFrameReceivedAt = 0, lastStreamSequence = -1;
 const frameWaiters = new Set();
-let lastSession = "", sequenceSession = "", currentState = null, finalRenderedSession = "", lastHistoryRevision = -1;
+let lastSession = "", sequenceSession = "", currentState = null, finalRenderedSession = "", lastHistoryRevision = -1, finalQrRendered = "", qrRepairRequested = "";
 const api = async (url, opts = {}) => {
   const response = await fetch(url, opts);
   let data = {};
@@ -246,6 +246,33 @@ async function captureCurrent(slot, sessionId, mirror = mirrorEnabled()) {
   renderHistory(currentState);
   setCameraState("READY", "LIVE CAMERA CONNECTED");
 }
+function isValidPublicGalleryUrl(value) {
+  try {
+    const url = new URL(String(value || ""), location.origin);
+    if (url.protocol !== "https:" && !(url.protocol === "http:" && /^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(url.hostname))) return false;
+    if (/^(localhost|127\.0\.0\.1)$/i.test(url.hostname)) return false;
+    return /\/g\/(?:[A-Za-z0-9_-]{40,100}|[A-Za-z0-9_-]{6,}\/[A-Za-z0-9_-]{40,100})$/.test(url.pathname);
+  } catch { return false; }
+}
+function cloudGalleryExpected() {
+  return !!(currentState?.final && !currentState.final.url && currentState.status !== "idle");
+}
+async function requestQrRegeneration(sessionId) {
+  if (!sessionId || qrRepairRequested === sessionId) return;
+  qrRepairRequested = sessionId;
+  try {
+    const repaired = await api(`/api/saved-session/${encodeURIComponent(sessionId)}/qr`, payload({}));
+    if (repaired?.ok && repaired.qr && isValidPublicGalleryUrl(repaired.url)) {
+      currentState = currentState || {};
+      currentState.final = { ...(currentState.final || {}), qr: repaired.qr, url: repaired.url };
+      renderSessionComplete(sessionId, { final: currentState.final });
+    }
+  } catch {
+    // The cloud worker may still be uploading. Permit another repair attempt later.
+    setTimeout(() => { if (qrRepairRequested === sessionId) qrRepairRequested = ""; }, 15000);
+  }
+}
+
 function renderSessionComplete(sessionId, result) {
   const photos = currentState?.photos || [];
   const final = result?.final || currentState?.final || {};
@@ -294,12 +321,28 @@ function renderSessionComplete(sessionId, result) {
     strip.src = stripUrl;
   }
   const qr = $("guestFinalQr");
-  if (qr) { if (final.qr) { qr.src = final.qr; qr.classList.remove("hidden"); } else { qr.removeAttribute("src"); qr.classList.add("hidden"); } }
+  const validGalleryUrl = isValidPublicGalleryUrl(final.url);
+  const hasQr = !!(final.qr && validGalleryUrl);
+  if (qr) {
+    if (hasQr) {
+      qr.onload = () => { qr.classList.remove("hidden"); };
+      qr.onerror = () => { qr.classList.add("hidden"); requestQrRegeneration(sessionId); };
+      qr.src = `${final.qr}${final.qr.includes("?") ? "&" : "?"}v=${Date.now()}`;
+      qr.classList.remove("hidden");
+      finalQrRendered = `${sessionId}|${final.qr}|${final.url}`;
+    } else {
+      qr.onload = null; qr.onerror = null; qr.removeAttribute("src"); qr.classList.add("hidden");
+      finalQrRendered = "";
+    }
+  }
+  if (validGalleryUrl && !final.qr) requestQrRegeneration(sessionId);
   const qrMessage = $("qrMessage");
-  if (qrMessage) qrMessage.textContent = final.url ? "Scan with your phone camera to view and save your photos." : "Your photos are saved on this photobooth computer. Open the gallery here to view them.";
+  if (qrMessage) qrMessage.textContent = hasQr
+    ? "Scan with your phone camera to view and save your photos."
+    : (cloudGalleryExpected() ? "Uploading your photos and preparing your public gallery QR code…" : "Preparing your private gallery QR code…");
   const gallery = $("galleryLink");
   const galleryPath = currentState?.status === "finished" ? `/session/${encodeURIComponent(sessionId)}` : `/ready/${encodeURIComponent(sessionId)}`;
-  if (gallery) { gallery.href = final.url || "#"; gallery.hidden = !final.url; }
+  if (gallery) { gallery.href = validGalleryUrl ? final.url : "#"; gallery.hidden = !validGalleryUrl; }
   const saveGif = $("saveGif");
   if (saveGif) { saveGif.hidden = !final.gif_filename; if (final.gif_filename) saveGif.href = privateBase ? `${privateBase}/final/gif` : `/final/${encodeURIComponent(final.gif_filename)}`; }
   const savePhotos = $("savePhotos");
@@ -411,7 +454,7 @@ async function refreshState() {
     const state = await api("/api/state"); currentState = state; renderHistory(state);
     // Never reopen the webcam after all three shots have been captured.
     if (!stream && !preparingSession && (previewMode || secondaryMode || state.photo_count < 3)) startCamera().catch(() => {});
-    if (state.session_id !== lastSession) { lastSession = state.session_id; sequenceSession = ""; finalRenderedSession = ""; }
+    if (state.session_id !== lastSession) { lastSession = state.session_id; sequenceSession = ""; finalRenderedSession = ""; finalQrRendered = ""; qrRepairRequested = ""; }
     if (previewMode) { show("captureScreen"); $("guestHistoryPanel")?.classList.add("hidden"); $("yslCredits")?.classList.remove("hidden"); return; }
     // Keep SESSION COMPLETE visible while derived exports are prepared asynchronously.
     if (state.status === "processing" && state.session_id && state.photo_count === 3) {
@@ -429,15 +472,19 @@ async function refreshState() {
         preparingSession = state.session_id;
         renderSessionComplete(state.session_id, { final: state.final });
       } else if (preparingSession === state.session_id) {
-        if (state.final?.gif_filename && finalRenderedSession !== state.session_id) renderSessionComplete(state.session_id, { final: state.final });
+        const qrKey = state.final?.qr && state.final?.url ? `${state.session_id}|${state.final.qr}|${state.final.url}` : "";
+        if ((state.final?.gif_filename && finalRenderedSession !== state.session_id) || (qrKey && qrKey !== finalQrRendered)) renderSessionComplete(state.session_id, { final: state.final });
         else show("completeScreen");
       }
       return;
     }
     if (state.status === "finished" && state.session_id) {
       if (preparingSession !== state.session_id) { preparingSession = state.session_id; renderSessionComplete(state.session_id, { final: state.final }); }
-      else if (state.final?.gif_filename && finalRenderedSession !== state.session_id) renderSessionComplete(state.session_id, { final: state.final });
-      else show("completeScreen");
+      else {
+        const qrKey = state.final?.qr && state.final?.url ? `${state.session_id}|${state.final.qr}|${state.final.url}` : "";
+        if ((state.final?.gif_filename && finalRenderedSession !== state.session_id) || (qrKey && qrKey !== finalQrRendered)) renderSessionComplete(state.session_id, { final: state.final });
+        else show("completeScreen");
+      }
       return;
     }
     if (!state.active && !state.photo_count) { show("welcome"); $("guestStart").disabled = false; return; }
