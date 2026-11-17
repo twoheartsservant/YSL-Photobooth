@@ -703,8 +703,8 @@ def _brand_gif_frame(frame, logo, facebook_icon=None, instagram_icon=None):
 
     # Two horizontal groups, each with its own icon and two readable text lines.
     groups = [
-        (facebook_icon, ("", "YSL Valencia")),
-        (instagram_icon, ("", "@ysl.valencia")),
+        (facebook_icon, (" ", "YSL Valencia")),
+        (instagram_icon, (" ", "@ysl.valencia")),
     ]
     measured = []
     for source_icon, lines in groups:
