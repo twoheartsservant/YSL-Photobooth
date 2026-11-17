@@ -17,3 +17,4 @@ storage/sessions/*
 !storage/final/.gitkeep
 !storage/qr/.gitkeep
 !storage/sessions/.gitkeep
+G
