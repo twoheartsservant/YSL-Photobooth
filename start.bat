@@ -25,6 +25,6 @@ start "" cmd /c "timeout /t 3 >nul & start http://127.0.0.1:5000"
 python app.py
 goto :eof
 :error
-echo Setup failed. Check Python installation and network access for first-time package .
+echo Setup failed. Check Python installation and network access for first-time package installation.
 pause
 exit /b 1
